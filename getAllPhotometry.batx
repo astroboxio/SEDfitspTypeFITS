@@ -1,0 +1,74 @@
+# fbol data collection:
+#
+#fbolFormat $1 -strom -geneva -2Mass -longWL -CIO > $2
+#
+#
+# omitting the '-hipparcos' flag for now
+#
+# systems supported by fbol:
+#
+# Johnson U,B,V,R,I,J,H,K,L,M,N,Q
+# Cousins Rc, Ic
+# Geneva  U,B1,B,B2,V1,V,G
+# Stromgren uvby
+# 2Mass J,H,Ks
+# CIT J, H, K, L
+# Walraven W, B, V, R 				# was a dubious zeropoint, now revised
+# Hipparcos Hp						# do not use, dubious zeropoint
+# Tycho Bt, Vt						# do not use, dubious zeropoint
+# ThuanGunn u, v, g, r
+# DDO F35, F38, F41, F45, F48, F51 	# was a dubious zeropoint, now revised
+# Vilnius U, P, X, Y, Z, V, S
+# Straizys U, P, X, Y, Z, V, S		# maps onto Vilnius
+# Oja m41, m42, m45
+# UVBE								# maps onto Johnson
+# UBVRI								# maps onto Johnson
+# IJHKLMN							# maps onto Johnson
+# 13-color 							# zeropoint pending
+# 
+#
+# GCPD2.py data collection:
+python ./GCPD2.py --target $1 --system UBV > $2		# first line here deletes old file with '>' not '>>'
+python ./GCPD2.py --target $1 --system DDO >> $2
+python ./GCPD2.py --target $1 --system uvby >> $2
+python ./GCPD2.py --target $1 --system Vilnius >> $2
+python ./GCPD2.py --target $1 --system Straizys >> $2
+python ./GCPD2.py --target $1 --system Geneva >> $2
+python ./GCPD2.py --target $1 --system Oja >> $2
+# python ./GCPD2.py --target $1 --system Washington >> $2
+python ./GCPD2.py --target $1 --system WBVR >> $2
+python ./GCPD2.py --target $1 --system UBVE >> $2
+python ./GCPD2.py --target $1 --system UBVRI >> $2
+python ./GCPD2.py --target $1 --system IJHKLMN >> $2
+grep $1 13-color_source_120806a.txt | grep -v $1[0-9] >> $2	# second grep prevents 5-digit matches for 4-digit numbers,  like HD21515 for HD2151
+grep $1 MSX-source-120810a.txt | grep -v $1[0-9] >> $2
+#
+#
+# Washington not currently supported by fbol
+#
+#
+#
+#fbolFormat $1 -strom -geneva -2Mass -longWL -CIO > $2
+fbolFormat $1 -2Mass -longWL -CIO | grep 'CIO\|2Mass\|IRAS' >> $2	# query SIMBAD but collect only
+																	# the CIO (Gezari), 2Mass, and IRAS
+																	# data
+tempName=$(awk '{ $2 }; END{ print $2 }' $2)		# fix the crazy 'HD_4128-K0III' sorts of output file names. First
+													# collect the identifier from the last line of the file.
+sed -i "s/$tempName/$1/g" $2						# Next, replace with our original identifier.
+#
+# sedFit chokes on statements like:
+#      No data for star 51Peg in photosystem ['uvby']
+# from GCPD, so the following grep filters that out.
+#
+grep -v 'photosystem \[' $2 > foo4
+#
+# Put together our output files
+#
+cat foo4 > $2
+#
+# now clean up
+#
+#rm foo2
+rm foo4
+
+
